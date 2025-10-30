@@ -6,6 +6,9 @@ A Rust-based library for launching an authentication flow with Auth0, obtaining 
 
 ## Usage
 See examples for details. Start with auth0_auto.
+```Rust
+let answer = auth0_auto(ENV_PROFILE, APPLICATION_NAME, YML_AUTH0_CONFIG, SVR_PREFIX, YML_KEYS, SCOPE, Some(icon_path));
+```
 
 bt_loger is a hard-dependency, Always build a bt_loger:
 ```RUST
@@ -32,6 +35,10 @@ dev:
 ## Version History
 * 0.1.0
     * Initial Release
+* 0.2.0
+  * Added icon support for auth0_auto, displaying the provided icon (breaking change). 
+  * Lowered the wry library version supported to 0.51.2 to enhance compatibility with other frameworks.
+  * Rename lib auth0_auto to auth0_easy (breaking change)
 
 ## License
 CC-BY-NC-ND-4.0
