@@ -6,9 +6,9 @@ authors = ["calvarez <calvarez@bachuetech.biz>"]
 description = "An Auth0 authentication API that returns the access token and user info"
 keywords = ["auth0", "authentication", "authorization", "api", "service"]
 categories = ["authentication", "api-bindings"]
-repository = "https://github.com/bachuetech/"
+repository = "https://github.com/bachuetech/bt_auth0"
 readme = "README.md"
-homepage = "https://github.com/bachuetech/"
+homepage = "https://github.com/bachuetech/bt_auth0.git"
 license = "CC-BY-NC-ND-4.0"
 
 [dependencies]
