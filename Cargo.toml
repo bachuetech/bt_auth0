@@ -1,0 +1,27 @@
+[package]
+name = "bt_auth0"
+version = "0.1.0"
+edition = "2024"
+authors = ["calvarez <calvarez@bachuetech.biz>"]
+description = "An Auth0 authentication API that returns the access token and user info"
+keywords = ["auth0", "authentication", "authorization", "api", "service"]
+categories = ["authentication", "api-bindings"]
+repository = "https://github.com/bachuetech/"
+readme = "README.md"
+homepage = "https://github.com/bachuetech/"
+license = "CC-BY-NC-ND-4.0"
+
+[dependencies]
+bt_logger = "0.2.5"
+bt_secure_storage = "0.1.2"
+bt_string_utils = "0.2.4"
+bt_yaml_utils = "0.1.10"
+chrono = "0.4.42"
+oauth2 = "5.0.0"
+reqwest = { version = "0.12.24", features = ["json", "rustls-tls"] }
+serde_json = "1.0.145"
+tao = "0.34.5"
+tiny_http = "0.12.0"
+tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
+url = "2.5.7"
+wry = "0.53.5"
