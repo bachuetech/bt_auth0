@@ -69,12 +69,10 @@ fn open_auth0_webview_login(app_name: &str, app_icon: Option<Icon>, client_id: &
         .with_window_icon(app_icon)
         .with_inner_size(LogicalSize::new(1024.0, 768.0))
         .build( &event_loop)?;
-        //.expect(&get_error!("open_auth0_webview_login","Failed to build window"));
 
     let mut webview = Some(WebViewBuilder::new()
         .with_url(auth_url) 
         .build(&window)?);
-        //.expect(&get_error!("open_auth0_webview_login","Failed to build webview"));
 
     event_loop.run_return(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -166,18 +164,54 @@ fn exchange_code_for_token(code: String, verifier: String, client_id: &str, redi
 }
 
 
+
 /// Listens for incoming requests on a local server with the code to exchange from Auth0 authentication.
 /// This function takes the event loop and port number as parameters to configure the server.
 ///
 /// # Parameters
 /// * `proxy`: to send a notification to close the window and continue Auth Flow
-/// * `redirect_port`: The port number of the redirect URI.
-fn listen_for_auth_code(proxy: EventLoopProxy<u64>, redirect_port: &str) -> Result<Receiver<String>, Box<dyn Error>> {
-    let redirect_server_address = format!("127.0.0.1:{}",redirect_port);
-    log_verbose!("listen_for_auth_code","Starting Local Server {}",redirect_server_address);
+/// * `redirect_ports`: The port numbers of the redirect URI. It is a comma separated str with port numbers
+/// 
+/// #Returns:
+/// * usize: Listening (redirect) port
+/// * Receiver<String>: Listening for event to exit
+fn listen_for_auth_code(proxy: EventLoopProxy<u64>, redirect_ports: &Vec<usize>) -> Result<(usize,Receiver<String>), Box<dyn Error>> {
+    let ports: Vec<usize> = redirect_ports.clone(); //Required clone due to thread::spawn(move || 
+    let mut choosen_redirect_port = ports[0];    
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
+
+    let mut redirect_server_address = format!("127.0.0.1:{}",choosen_redirect_port);
+    let mut svr = Server::http(&redirect_server_address);
+    
+    while svr.is_err() {
+        for port in ports.clone(){
+            redirect_server_address = format!("127.0.0.1:{}",port);
+            svr = Server::http(&redirect_server_address);
+            if svr.is_ok(){
+                log_verbose!("listen_for_auth_code","Starting Local Server {}",redirect_server_address); 
+                choosen_redirect_port = port;              
+                break;
+            }else{
+                log_verbose!("listen_for_auth_code","Cannot start server at '{}'",redirect_server_address);
+            }
+        }
+
+        if svr.is_err() {
+            choosen_redirect_port = ports[0];                  
+            log_error!("listen_for_auth_code","Could not initialize localserver to redirect requests. Last try with default port 0 '{}'",choosen_redirect_port);
+            redirect_server_address = format!("127.0.0.1:{}",choosen_redirect_port);
+            svr = Server::http(&redirect_server_address);
+            if svr.is_err() {
+                log_error!("listen_for_auth_code","Unable to start local server to receive redirections. Must exits now!");
+                return Err(get_error!("listen_for_auth_code","Unable to start local server to receive redirections.").into())             
+            }
+        }
+    }
+
     thread::spawn(move || {
-        let server = Server::http(&redirect_server_address).expect("Failed to start server");
+        log_verbose!("listen_for_auth_code","Starting Local Server in port {}",choosen_redirect_port); 
+        let server: Server = svr.expect("Failed to start server with available port");
+
         for request in server.incoming_requests() {
             // Parse the full request URL
             let full_url = format!("http://localhost{}", request.url());
@@ -211,7 +245,7 @@ fn listen_for_auth_code(proxy: EventLoopProxy<u64>, redirect_port: &str) -> Resu
 
     });
     log_verbose!("listen_for_auth_code","Returning rx");
-    return Ok(rx);
+    return Ok( (choosen_redirect_port, rx) );
 }
 
 
@@ -236,15 +270,15 @@ pub fn launch_auth_flow(env_profile: &str, app_name: &str, app_icon: Option<Icon
 
     let event_loop: EventLoop<u64> = EventLoopBuilder::with_user_event().build();
     let proxy = event_loop.create_proxy();
-    let rx_code = listen_for_auth_code(proxy, &auth0_config.get_redirect_port())?; //MUST have proxy to close the window and continue Auth Flow!
+    let (redirect_port,rx_code) = listen_for_auth_code(proxy, &auth0_config.get_redirect_port())?; //MUST have proxy to close the window and continue Auth Flow!
 
     // Block until server sends code
-    let _login_window = open_auth0_webview_login(app_name, app_icon, &auth0_config.get_client_id(), &challenge,&auth0_config.get_redirect_uri(),
+    let _login_window = open_auth0_webview_login(app_name, app_icon, &auth0_config.get_client_id(), &challenge,&auth0_config.get_redirect_uri(redirect_port),
                                                         scope, &auth0_config.get_authorize_url(), &state, event_loop)?;
     log_verbose!("launch_auth_flow","Waiting for authorization code from server thread...");
     let code = rx_code.recv()?; //Waiting for code
 
-    let resp_token = exchange_code_for_token(code, verifier, &auth0_config.get_client_id(), &auth0_config.get_redirect_uri(), 
+    let resp_token = exchange_code_for_token(code, verifier, &auth0_config.get_client_id(), &auth0_config.get_redirect_uri(redirect_port), 
                                                                     &auth0_config.get_client_secret(), &auth0_config.get_authorize_url(),
                                                                 &auth0_config.get_token_url())?;
 

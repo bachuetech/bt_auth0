@@ -26,8 +26,9 @@ pub struct Auth0Config {
     domain: String,
     client_id: String,
     client_secret: String,
-    redirect_port: String,
-    redirect_uri: String,
+    redirect_port: Vec<usize>,
+    redirect_server: String,
+    redirect_path: String,
 }
 
 impl Auth0Config {
@@ -42,15 +43,17 @@ impl Auth0Config {
     pub fn get_auth0_config(env_profile: &str, yml_auth0_config: &str) -> Result<Auth0Config,Box<dyn Error>>{
         let config = get_yaml_from_string(yml_auth0_config)?;
         let auth0_redir_port = config[env_profile]["redirect_port"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Redirect Port in Auth0 YAML config file"))?.to_owned();
-        let auth0_redirect = format!("{}:{}",config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
-                                                    auth0_redir_port);
+        //let auth0_redirect = format!("{}:{}",config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
+        //                                            auth0_redir_port);
 
         Ok(Auth0Config{
             domain: config[env_profile]["domain"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Domain in Auth0 YAML config file"))?.to_owned(),
             client_id: config[env_profile]["client_id"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Cliend-ID in Auth0 YAML config file"))?.to_owned(),
             client_secret: config[env_profile]["client_secret"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Client-secret in Auth0 YAML config file"))?.to_owned(),
-            redirect_port: auth0_redir_port,
-            redirect_uri: format!("{}{}",auth0_redirect, config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned())
+            redirect_port: auth0_redir_port.split(',').filter_map(|p| p.trim().parse::<usize>().ok()).collect(),
+            redirect_server: config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
+            redirect_path: config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned(), //auth0_redir_port,
+            //redirect_uri: format!("{}{}",auth0_redirect, config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned())
         })
     }
     
@@ -69,14 +72,18 @@ impl Auth0Config {
         self.client_secret.clone()
     }
 
-    /// Returns the port number that clients use for redirects.    
-    pub fn get_redirect_port(&self) -> String{
+    /// Returns the port number(s) that clients use for redirects.    
+    pub fn get_redirect_port(&self) -> Vec<usize>{ //String{
         self.redirect_port.clone()
     }   
 
     /// Returns the base URL of the redirect URI, including the scheme and domain.    
-    pub fn get_redirect_uri(&self) -> String{
-        self.redirect_uri.clone()
+    pub fn get_redirect_uri(&self, port: usize) -> String{
+        if self.redirect_port.contains(&port){
+            format!("{}:{}{}",self.redirect_server,port,self.redirect_path)
+        }else{
+            format!("Invalid Port {}",port)
+        }
     }   
 
     /// Returns the full URL for the Auth0 OAuth authorization endpoint.
@@ -129,8 +136,8 @@ dev:
         assert_eq!(config.get_domain(), "example.auth0.com");
         assert_eq!(config.get_client_id(), "client_id_123");
         assert_eq!(config.get_client_secret(), "client_secret_456");
-        assert_eq!(config.get_redirect_port(), "3000");
-        assert_eq!(config.get_redirect_uri(), "http://localhost:3000/callback");
+        assert_eq!(config.get_redirect_port(), vec![3000]);
+        assert_eq!(config.get_redirect_uri(3000), "http://localhost:3000/callback");
     }
 
     // Test for missing redirect port
@@ -214,7 +221,7 @@ dev:
 "#;
 
         let config = Auth0Config::get_auth0_config("dev", yaml_config).unwrap();
-        assert_eq!(config.get_redirect_uri(), "http://localhost:3000/callback");
+        assert_eq!(config.get_redirect_uri(3000), "http://localhost:3000/callback");
     }
 
     // Test for custom redirect path
@@ -232,7 +239,7 @@ dev:
 "#;
 
         let config = Auth0Config::get_auth0_config("dev", yaml_config).unwrap();
-        assert_eq!(config.get_redirect_uri(), "http://localhost:3000/custom");
+        assert_eq!(config.get_redirect_uri(3000), "http://localhost:3000/custom");
     }
 
     // Test for default redirect server
@@ -244,12 +251,12 @@ dev:
   domain: "example.auth0.com"
   client_id: "client_id_123"
   client_secret: "client_secret_456"
-  redirect_port: "3000"
+  redirect_port: "3000,4000"
   redirect_path: "/callback"
 "#;
 
         let config = Auth0Config::get_auth0_config("dev", yaml_config).unwrap();
-        assert_eq!(config.get_redirect_uri(), "http://localhost:3000/callback");
+        assert_eq!(config.get_redirect_uri(4000), "http://localhost:4000/callback");
     }
 
     // Test for authorize URL

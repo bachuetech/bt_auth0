@@ -34,11 +34,14 @@ dev:
 
 ## Version History
 * 0.1.0
-    * Initial Release
+  * Initial Release
 * 0.2.0
   * Added icon support for auth0_auto, displaying the provided icon (breaking change). 
   * Lowered the wry library version supported to 0.51.2 to enhance compatibility with other frameworks.
   * Rename lib auth0_auto to auth0_easy (breaking change)
+* 0.2.1
+  * Support multiple ports for Auth0 redirect
+  * The maximum number of login retries is set to 10. (Avoid an infinite loop)
 
 ## License
 CC-BY-NC-ND-4.0

@@ -6,6 +6,8 @@ use tao::window::Icon;
 
 use crate::{auth0::launch_auth_flow, auth0_config::Auth0Config, auth0_tokens::Auth0Token};
 
+const MAX_LOGIN_RETRIES: usize = 10; 
+
 /// Loads an icon from a file path and converts it into a format suitable for use as an application icon. 
 /// It reads an image file, converts it to RGBA8 format, and then creates an Icon object from the image data.
 /// # Parameters
@@ -43,25 +45,32 @@ pub fn auth0_auto(env_profile: &str, application_name: &str, yml_auth0_config: &
 
     let yml_config = Auth0Config::get_auth0_config(env_profile,yml_auth0_config);
 
+
     if let Ok(auth0_config) = yml_config{
+        let mut login_retries = 0;
         let vault = SecretVault::new(service_prefix);
         let mut at = Auth0Token::retrieve_token_data(env_profile, yml_keys, &vault); //Retrieve Auth0 Token from Vault
-        while at.is_err(){
+        while at.is_err() && login_retries <= MAX_LOGIN_RETRIES{
             log_verbose!("auth0_auto","No stored token found: '{:?}'",at.unwrap_err());
             at = launch_auth_flow(env_profile,application_name, app_icon.clone(), &auth0_config,scopes,yml_keys);
+            login_retries += 1;
         }
 
         if at.is_ok(){
             let mut auth0_token = at.unwrap();
-            while auth0_token.does_token_expire_in(600) { //If token is about to expire, re-login. 10 minutes left (600) re-login.
+            login_retries = 0;
+            while auth0_token.does_token_expire_in(600) && login_retries <= MAX_LOGIN_RETRIES { //If token is about to expire, re-login. 10 minutes left (600) re-login.
                 log_info!("auth0_auto","Access Token is about to expire. Login again before token expire");
                 let _ = auth0_token.remove_token_data(&vault); //Remove Stored Data, just in case.
                 at = launch_auth_flow(env_profile,application_name, app_icon.clone(), &auth0_config,scopes,yml_keys);
-                while at.is_err(){
+                let mut sub_login_retries = 0;
+                while at.is_err() && sub_login_retries <= MAX_LOGIN_RETRIES{
                     log_warning!("auth0_auto","Error from Login page. Try login page flow again. Error: {:?}",at.unwrap_err());
                     at = launch_auth_flow(env_profile,application_name, app_icon.clone(), &auth0_config,scopes,yml_keys);
+                    sub_login_retries +=1; 
                 }
                 auth0_token = at.unwrap();
+                login_retries += 1;
             }
 
             if !auth0_token.is_token_expired(){
