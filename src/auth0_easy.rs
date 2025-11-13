@@ -41,10 +41,32 @@ fn load_icon(path: &str) -> Result<Icon, Box<dyn Error>> {
 ///  * Failure: Returns an error boxed as Box<dyn Error> with detailed error information
 pub fn auth0_auto(env_profile: &str, application_name: &str, yml_auth0_config: &str, service_prefix: &str, yml_keys: &str, scopes: &str, icon_path: Option<&str>) 
                     -> Result<Auth0Token, Box<dyn Error>>{
+
     let app_icon = if icon_path.is_some() { Some(load_icon(icon_path.unwrap())?)}else{None};
+    auth0_auto_with_icon_img(env_profile, application_name, yml_auth0_config, service_prefix, yml_keys, scopes, app_icon)
 
+}
+
+///The auth0_auto function provides an automated authentication flow for Auth0-based applications. 
+///It handles token retrieval from a secret vault, manages token expiration, and automatically re-authenticates when necessary. 
+///This function ensures that a valid Auth0 token is available for use by the application.
+///
+/// #Parameters:
+///  * env_profile 	&str 	The environment profile to use for configuration and authentication
+///  * application_name 	&str 	The name of the application requesting authentication
+///  * yml_auth0_config 	&str 	Content of the YAML configuration file for Auth0 settings
+///  * service_prefix 	&str 	Prefix used for identifying secrets in the vault
+///  * yml_keys 	&str 	Content of the YAML file containing emcryption keys
+///  * scopes 	&str 	Space-separated list of OAuth scopes required for the application
+///  * app_icon option<icon> The icon image as Tao Icon.
+/// 
+/// #Return:
+/// A Result: Result<Auth0Token, Box<dyn Error>>
+///  * Success: Returns a valid Auth0Token struct containing the authenticated token data
+///  * Failure: Returns an error boxed as Box<dyn Error> with detailed error information
+pub fn auth0_auto_with_icon_img(env_profile: &str, application_name: &str, yml_auth0_config: &str, service_prefix: &str, yml_keys: &str, scopes: &str, app_icon: Option<Icon>)
+                                    -> Result<Auth0Token, Box<dyn Error>>{
     let yml_config = Auth0Config::get_auth0_config(env_profile,yml_auth0_config);
-
 
     if let Ok(auth0_config) = yml_config{
         let mut login_retries = 0;
@@ -90,5 +112,5 @@ pub fn auth0_auto(env_profile: &str, application_name: &str, yml_auth0_config: &
         }
     }else{
         return Err(get_fatal!("auth0_auto","Cannot initialize Auth0. Error reading YAML Config file. {}",yml_config.unwrap_err()).into())
-    }        
-}
+    }         
+} 

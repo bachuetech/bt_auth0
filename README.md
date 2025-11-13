@@ -44,6 +44,8 @@ dev:
   * The maximum number of login retries is set to 10. (Avoid an infinite loop)
 * 0.2.2
   * Update Dependencies
+* 0.2.3
+  * New function with support for auth0_auto with the icon image instead of the path.
 
 ## License
 CC-BY-NC-ND-4.0
