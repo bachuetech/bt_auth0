@@ -4,7 +4,7 @@ use bt_secure_storage::secure_storage::SecretVault;
 
 
 fn main(){
-    build_logger("BACHUETECH", "bt_auth0_test", bt_logger::LogLevel::VERBOSE, bt_logger::LogTarget::STD_ERROR);
+    build_logger("BACHUETECH", "bt_auth0_test", bt_logger::LogLevel::VERBOSE, bt_logger::LogTarget::STD_ERROR, None);
 
     const APPLICATION_NAME: &str = "BT Auth0 TEST";
     const ENV_PROFILE: &str = "dev";    

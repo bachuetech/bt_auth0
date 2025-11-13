@@ -2,7 +2,7 @@ use bt_auth0::auth0_easy::auth0_auto;
 use bt_logger::{build_logger, log_verbose};
 
 fn main(){
-    build_logger("BACHUETECH", "bt_auth0_test", bt_logger::LogLevel::VERBOSE, bt_logger::LogTarget::STD_ERROR);
+    build_logger("BACHUETECH", "bt_auth0_test", bt_logger::LogLevel::VERBOSE, bt_logger::LogTarget::STD_ERROR, None);
 
     const ENV_PROFILE: &str = "dev";  
     const APPLICATION_NAME: &str = "BT Auth0 TEST";

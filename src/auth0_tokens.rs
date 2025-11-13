@@ -373,7 +373,7 @@ mod auth0_token_tests {
     static INIT: Once = Once::new();
     fn ini_log() {
         INIT.call_once(|| {
-            build_logger("BACHUETECH", "UNIT TEST RUST auth0_config_tests", LogLevel::VERBOSE, LogTarget::STD_ERROR );     
+            build_logger("BACHUETECH", "UNIT TEST RUST auth0_config_tests", LogLevel::VERBOSE, LogTarget::STD_ERROR, None );     
         });
     }
 

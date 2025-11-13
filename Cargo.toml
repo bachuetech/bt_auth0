@@ -1,6 +1,6 @@
 [package]
 name = "bt_auth0"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 authors = ["calvarez <calvarez@bachuetech.biz>"]
 description = "An Auth0 authentication API that returns the access token and user info"
@@ -12,10 +12,10 @@ homepage = "https://github.com/bachuetech/bt_auth0.git"
 license = "CC-BY-NC-ND-4.0"
 
 [dependencies]
-bt_logger = "0.2.5"
-bt_secure_storage = "0.1.2"
-bt_string_utils = "0.2.4"
-bt_yaml_utils = "0.1.10"
+bt_logger = "0.3.1"
+bt_secure_storage = "0.1.3"
+bt_string_utils = "0.2.5"
+bt_yaml_utils = "0.1.11"
 chrono = "0.4.42"
 image = "0.25.8"
 oauth2 = "5.0.0"

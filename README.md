@@ -42,6 +42,8 @@ dev:
 * 0.2.1
   * Support multiple ports for Auth0 redirect
   * The maximum number of login retries is set to 10. (Avoid an infinite loop)
+* 0.2.2
+  * Update Dependencies
 
 ## License
 CC-BY-NC-ND-4.0
