@@ -48,6 +48,8 @@ dev:
   * New function with support for auth0_auto with the icon image instead of the path.
 * 0.2.4
   * Support for optional client secret
+* 0.2.5
+  * Update Dependencies  
 
 ## License
 CC-BY-NC-ND-4.0

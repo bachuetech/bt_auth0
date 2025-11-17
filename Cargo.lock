@@ -260,7 +260,7 @@ dependencies = [
 
 [[package]]
 name = "bt_auth0"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "bt_logger",
  "bt_secure_storage",
@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "bt_string_utils"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23bfa2df4148fdeaddd861f06567e38d140216113e590bb8d1ec185cedad66df"
+checksum = "26cd791e5539cc0a06f296dd0701583de1f1cb82879ef9eaa270517fc46889ed"
 dependencies = [
  "rand 0.9.2",
  "regex",
