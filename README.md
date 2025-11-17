@@ -46,6 +46,8 @@ dev:
   * Update Dependencies
 * 0.2.3
   * New function with support for auth0_auto with the icon image instead of the path.
+* 0.2.4
+  * Support for optional client secret
 
 ## License
 CC-BY-NC-ND-4.0

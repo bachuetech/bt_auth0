@@ -116,7 +116,7 @@ struct Auth0InternalToken{
 /// 
 /// # Returns
 /// A result with the Auth0 Internal Token or an error occurred.  
-fn exchange_code_for_token(code: String, verifier: String, client_id: &str, redirect_uri: &str, client_secret: &str, auth_endpoint: &str, token_endpoint: &str ) 
+fn exchange_code_for_token(code: String, verifier: String, client_id: &str, redirect_uri: &str, client_secret: Option<String>, auth_endpoint: &str, token_endpoint: &str ) 
                                 -> Result<Auth0InternalToken, Box<dyn Error>>{
     log_verbose!("exchange_code_for_token","Starting exchange");
 
@@ -124,19 +124,23 @@ fn exchange_code_for_token(code: String, verifier: String, client_id: &str, redi
     let rt = tokio::runtime::Runtime::new()?;
 
     let auth0_client_id = ClientId::new(client_id.to_owned());
-    let auth0_client_secret = ClientSecret::new(client_secret.to_owned());
+
     let auth0_url = AuthUrl::new(auth_endpoint.to_owned())?;   
     let auth0_token_url =  TokenUrl::new(token_endpoint.to_owned())?;
     let auth0_redirect_uri =  RedirectUrl::new(redirect_uri.to_owned())?;
     let auth_code = AuthorizationCode::new(code.clone());
 
 
-    let client = oauth2::basic::BasicClient::new(auth0_client_id)
-        .set_client_secret(auth0_client_secret)
+    let mut client = oauth2::basic::BasicClient::new(auth0_client_id)
         .set_auth_uri(auth0_url)
         .set_token_uri(auth0_token_url)
         .set_redirect_uri(auth0_redirect_uri)
         ;
+
+    if client_secret.is_some(){
+        let auth0_client_secret = ClientSecret::new(client_secret.unwrap().to_string());
+        client = client.set_client_secret(auth0_client_secret);
+    }
 
         let now = Utc::now().timestamp() as u64; //To use to expire token, Better expire it before time?
         let token_response = rt
@@ -279,7 +283,7 @@ pub fn launch_auth_flow(env_profile: &str, app_name: &str, app_icon: Option<Icon
     let code = rx_code.recv()?; //Waiting for code
 
     let resp_token = exchange_code_for_token(code, verifier, &auth0_config.get_client_id(), &auth0_config.get_redirect_uri(redirect_port), 
-                                                                    &auth0_config.get_client_secret(), &auth0_config.get_authorize_url(),
+                                                                    auth0_config.get_client_secret(), &auth0_config.get_authorize_url(),
                                                                 &auth0_config.get_token_url())?;
 
     let mut token = Auth0Token::new(env_profile,resp_token.token, resp_token.exp_timestamp, resp_token.scopes, auth0keys_yaml)?;

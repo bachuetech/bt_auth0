@@ -25,7 +25,7 @@ const ENDPOINT_USER_INFO_URL: &str = "/userinfo";
 pub struct Auth0Config {
     domain: String,
     client_id: String,
-    client_secret: String,
+    client_secret: Option<String>,
     redirect_port: Vec<usize>,
     redirect_server: String,
     redirect_path: String,
@@ -46,10 +46,16 @@ impl Auth0Config {
         //let auth0_redirect = format!("{}:{}",config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
         //                                            auth0_redir_port);
 
+        let cli_sec = if let Some(cs) = config[env_profile]["client_secret"].as_str() {
+            Some(cs.to_owned())
+        }else{
+            None
+        };
+
         Ok(Auth0Config{
             domain: config[env_profile]["domain"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Domain in Auth0 YAML config file"))?.to_owned(),
             client_id: config[env_profile]["client_id"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Cliend-ID in Auth0 YAML config file"))?.to_owned(),
-            client_secret: config[env_profile]["client_secret"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Client-secret in Auth0 YAML config file"))?.to_owned(),
+            client_secret: cli_sec, //config[env_profile]["client_secret"].as_str().ok_or(get_error!("get_auth0_config","No Auth0 Client-secret in Auth0 YAML config file"))?.to_owned(),
             redirect_port: auth0_redir_port.split(',').filter_map(|p| p.trim().parse::<usize>().ok()).collect(),
             redirect_server: config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
             redirect_path: config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned(), //auth0_redir_port,
@@ -68,7 +74,7 @@ impl Auth0Config {
     }
 
     /// Returns the client secret used to authenticate with the Auth0 instance.    
-    pub fn get_client_secret(&self) -> String{
+    pub fn get_client_secret(&self) -> Option<String>{
         self.client_secret.clone()
     }
 
@@ -117,6 +123,22 @@ mod auth0_config_tests {
         });
     }
 
+    const YAML_CONFIG: &str = r#"
+dev:
+  domain: "example.auth0.com"
+  client_id: "client_id_123"
+  client_secret: "client_secret_456"
+  redirect_port: "3000"
+  redirect_server: "http://localhost"
+  redirect_path: "/callback"
+prod:
+  domain: "exampleprd.auth0.com"
+  client_id: "client_id_abc"
+  redirect_port: "3001"
+  redirect_server: "http://localhost"
+  redirect_path: "/callback"  
+"#;
+
     // Test for successful configuration creation
     #[test]
     fn test_get_auth0_config_success() {
@@ -129,13 +151,18 @@ dev:
   redirect_port: "3000"
   redirect_server: "http://localhost"
   redirect_path: "/callback"
+prod:
+  domain: "exampleprd.auth0.com"
+  client_id: "client_id_abc"
+  redirect_port: "3001"
+  redirect_server: "http://localhost"
+  redirect_path: "/callback"  
 "#;
 
-        let config = Auth0Config::get_auth0_config("dev", yaml_config).unwrap();
-
+        let config = Auth0Config::get_auth0_config("dev", YAML_CONFIG).unwrap();
         assert_eq!(config.get_domain(), "example.auth0.com");
         assert_eq!(config.get_client_id(), "client_id_123");
-        assert_eq!(config.get_client_secret(), "client_secret_456");
+        assert_eq!(config.get_client_secret(), Some("client_secret_456".to_owned()));
         assert_eq!(config.get_redirect_port(), vec![3000]);
         assert_eq!(config.get_redirect_uri(3000), "http://localhost:3000/callback");
     }
@@ -204,7 +231,7 @@ dev:
 "#;
 
         let result = Auth0Config::get_auth0_config("dev", yaml_config);
-        assert!(result.is_err());
+        assert!(result.is_ok());
     }
 
     // Test for default redirect path
