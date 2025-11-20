@@ -59,7 +59,6 @@ impl Auth0Config {
             redirect_port: auth0_redir_port.split(',').filter_map(|p| p.trim().parse::<usize>().ok()).collect(),
             redirect_server: config[env_profile]["redirect_server"].as_str().unwrap_or("http://localhost").to_owned(),
             redirect_path: config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned(), //auth0_redir_port,
-            //redirect_uri: format!("{}{}",auth0_redirect, config[env_profile]["redirect_path"].as_str().unwrap_or("/callback").to_owned())
         })
     }
     

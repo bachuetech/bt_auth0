@@ -24,5 +24,7 @@ fn main(){
     let icon_path = "examples/icons/128x128.png";   
 
     let answer = auth0_auto(ENV_PROFILE, APPLICATION_NAME, YML_AUTH0_CONFIG, SVR_PREFIX, YML_KEYS, SCOPE, Some(icon_path));
+    
     log_verbose!("main","Auth0 Authentication Answer: {:?}",answer);
+    log_verbose!("main","Usr Pic {}",answer.unwrap().get_user_info("picture"));
 }

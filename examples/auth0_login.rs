@@ -36,6 +36,7 @@ fn main(){
                 auth0_token = at.unwrap();
             }
 
+            log_verbose!("main","Usr Pic from Toke '{}'",auth0_token.get_user_info("picture"));
             if !auth0_token.is_token_expired(){
                 //Valid Token save token data and continue to App
                 //if let Err(e) =  auth0_token.store_token_data(&vault){

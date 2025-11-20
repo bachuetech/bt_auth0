@@ -189,7 +189,7 @@ impl Auth0Token {
         if tmp_value.is_none(){
             "".to_owned()
         }else{
-            tmp_value.unwrap_or_default().to_string()
+            tmp_value.unwrap_or_default().as_str().unwrap_or("").to_owned() //to_string()
         }
     }
 

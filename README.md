@@ -50,6 +50,8 @@ dev:
   * Support for optional client secret
 * 0.2.5
   * Update Dependencies  
+* 0.2.6
+  * Remove extra quotes at the beginning and the end of the string when retrieving user info
 
 ## License
 CC-BY-NC-ND-4.0
